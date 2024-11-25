@@ -1,0 +1,36 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
+using CodeProject.AI.SDK;
+using CodeProject.AI.SDK.API;
+using CodeProject.AI.SDK.Utils;
+
+namespace CodeProject.AI.Modules.SenNnTi
+{
+    public class SenNnTiModule : ModuleWorkerBase
+    {
+        private readonly ILogger<SenNnTiModule> _logger;
+        private readonly string _modelDir;
+        private long _numItemsProcessed;
+        private Dictionary<string, long> _histogram = new Dictionary<string, long>();
+
+        public SenNnTiModule(ILogger<SenNnTiModule> logger, IConfiguration config,
+                           IHostApplicationLifetime hostApplicationLifetime)
+            : base(logger, config, hostApplicationLifetime)
+        {
+            _logger = logger;
+            _modelDir = config.GetValue("MODELS_DIR", Path.Combine(moduleDirPath!, "assets")) ?? "assets";
+        }
+
+        protected override ModuleResponse Process(BackendRequest request)
+        {
+            // Processing logic here
+        }
+    }
+}

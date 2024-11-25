@@ -1,0 +1,80 @@
+{
+  "Modules": {
+    "SenNnT-i": {
+      "Name": "SenNnT-i Neural Network",
+      "Version": "1.0.0",
+
+      "PublishingInfo": {
+        "Description": "Neural network processing module with MindsDB integration",
+        "Category": "Neural Processing",
+        "Stack": "Python, PyTorch, Ray Serve, MindsDB",
+        "License": "MIT",
+        "LicenseUrl": "https://opensource.org/licenses/MIT",
+        "Author": "Your Name",
+        "Homepage": "https://your-project-homepage.com"
+      },
+
+      "LaunchSettings": {
+        "AutoStart": true,
+        "Runtime": "python3.9",
+        "RuntimeLocation": "Local",
+        "Queue": "sennnti_queue",
+        "Parallelism": 4
+      },
+
+      "EnvironmentVariables": {
+        "MINDSDB_HOST": "127.0.0.1",
+        "MINDSDB_PORT": "47334",
+        "SENNNTI_HOST": "10.0.0.1",
+        "SENNNTI_PORT": "5000",
+        "MODELS_DIR": "%CURRENT_MODULE_PATH%\\assets"
+      },
+
+      "GpuOptions": {
+        "InstallGPU": true,
+        "EnableGPU": true,
+        "HalfPrecision": "enable"
+      },
+
+      "ModelRequirements": [{
+        "Task": "Neural Processing",
+        "Architecture": "SenNnT-i",
+        "Format": "PyTorch"
+      }],
+
+      "RouteMaps": [
+        {
+          "Name": "SenNnT-i Process",
+          "Route": "neural/process",
+          "Method": "POST",
+          "Command": "process",
+          "Description": "Process input through SenNnT-i neural network",
+          "Inputs": [
+            {
+              "Name": "data",
+              "Type": "Object",
+              "Description": "The input data to be processed"
+            }
+          ],
+          "Outputs": [
+            {
+              "Name": "success",
+              "Type": "Boolean",
+              "Description": "True if successful"
+            },
+            {
+              "Name": "result",
+              "Type": "Object",
+              "Description": "The processed output"
+            },
+            {
+              "Name": "inferenceMs",
+              "Type": "Integer",
+              "Description": "Processing time in milliseconds"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
