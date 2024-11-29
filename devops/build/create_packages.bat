@@ -32,14 +32,13 @@ set createExternalModulePackages=true
 
 ::set debug_json_parse=true
 
-set dotNetTarget=net8.0
+set dotNetTarget=net9.0
 
 
 :: Basic locations
 
-:: The name of the dir, within the current directory, where install assets will
-:: be downloaded
-set downloadDir=downloads
+:: The name of the dir, within the root directory, where packages will be stored
+set packageDir=\downloads\modules\packages
 
 :: The name of the dir holding the source code
 set srcDir=src
@@ -63,7 +62,7 @@ set rootDirPath=%cd%
 popd
 set sdkPath=%rootDirPath%\%srcDir%\%sdkDir%
 set utilsScriptsDirPath=%rootDirPath%\%srcDir%\scripts
-set utilsScript=!utilsScriptsDirPath!\utils.bat
+set utilsScript=%utilsScriptsDirPath%\utils.bat
 
 :: Override some values via parameters ::::::::::::::::::::::::::::::::::::::::
 
@@ -98,11 +97,16 @@ set utilsScript=!utilsScriptsDirPath!\utils.bat
     shift
 :end_param_loop
 
+:: Load vars in .env. This may update things like dotNetTarget
+for /f "tokens=1,2 delims==" %%a in (!rootDirPath!\.env) do set %%a=%%b
 
 :: The location of directories relative to the root of the solution directory
 set modulesDirPath=!rootDirPath!\!modulesDir!
 set externalModulesDirPath=!rootDirPath!\..\!externalModulesDir!
-set downloadDirPath=!rootDirPath!\!downloadDir!
+set packageDirPath=!rootDirPath!\!packageDir!
+
+if not exist "!packageDirPath!" mkdir "!packageDirPath!"
+
 
 :: Let's go
 if /i "!useColor!" == "true" call "!utilsScript!" setESC
@@ -241,8 +245,8 @@ REM Creates a package for a module
 
                     rem Move package into modules download cache
 
-                    rem echo Moving !packageModuleDirPath!\!packageModuleId!-!version!.zip to !downloadDirPath!\!modulesDir!\
-                    move /Y !packageModuleDirPath!\!packageModuleId!-!packageVersion!.zip !downloadDirPath!\!modulesDir!\  >NUL
+                    rem echo Moving !packageModuleDirPath!\!packageModuleId!-!version!.zip to !packageDirPath!\
+                    move /Y !packageModuleDirPath!\!packageModuleId!-!packageVersion!.zip !packageDirPath!\  >NUL
 
                     if errorlevel 1 (
                         call "!utilsScript!" WriteLine "Error" "Red"

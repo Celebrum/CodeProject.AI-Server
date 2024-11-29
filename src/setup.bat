@@ -8,7 +8,7 @@
 ::
 ::  1. From within the \src (or the root directory of the installation) in
 ::     order to setup the full system, including serer, SDKs, demos and modules.
-::     This method is typically used for setting up the Developmnent environment.
+::     This method is typically used for setting up the Development environment.
 ::
 ::  2. From within a module's directory (or demo or server folder) to setup just
 ::     that module, demo or the server
@@ -44,7 +44,7 @@
 @echo off
 REM cls
 
-setlocal enabledelayedexpansion
+SetLocal EnableDelayedExpansion
 
 REM Set CodePage UTF-8 for our emojis
 chcp 65001 >NUL
@@ -52,11 +52,12 @@ chcp 65001 >NUL
 :: verbosity can be: quiet | info | loud. Use --verbosity quiet|info|loud
 set verbosity=quiet
 
-:: The .NET version to use for the server. NOTE: Only major version matters unless we use manual
-:: install scripts, in which case we need to specify version. Choose version that works for SDK and
-:: runtime, since the versions of these are not in sync (currently RT is 8.0.5, SDK is 8.0.3)
-set serverDotNetVersion=8.0.3
-set dotNetTarget=net8.0
+:: The .NET version to install. NOTE: Only major version matters unless we use manual install
+:: scripts, in which case we need to specify version. Choose version that works for all platforms
+:: since the versions of these are not in always in sync
+set dotNetTarget=net9.0
+set dotNetRuntimeVersion=9.0.0
+set dotNetSDKVersion=9.0.100
 
 :: Show output in wild, crazy colours. Use --no-color to not use colour
 set useColor=true
@@ -99,9 +100,9 @@ set skipPipInstall=false
 :: Further: one-step means if you re-run the installer, the entire req file is
 :: always re-processed, whereas if oneStep is false, each package is checked for
 :: existence before running pip, speeding re-installs dramatically.
-:: Finally: one-step is an awful user experience. Everyghing hangs for minutes.
+:: Finally: one-step is an awful user experience. Everything hangs for minutes.
 :: Setting it to false provides far better (but maybe slower) feedback mechanism.
-:: FOR PIP INCOMPATIBILITY ISSUES: Set this to true and verbisity to loud to get
+:: FOR PIP INCOMPATIBILITY ISSUES: Set this to true and verbosity to loud to get
 :: excellent debug feedback from pip.
 set oneStepPIP=false
 
@@ -121,18 +122,14 @@ set appRootDirPath=!setupScriptDirPath!
 :: The location of large packages that need to be downloaded (eg an AWS S3 bucket
 :: name). This will be overwritten using the value from appsettings.json
 REM set assetStorageUrl=https://codeproject-ai.s3.ca-central-1.amazonaws.com/server/assets/
-REM set assetStorageUrl=https://codeproject-ai-bunny.b-cdn.net/server/assets/
-set assetStorageUrl=https://www.codeproject.com/ai/download/server/assets/
+set assetStorageUrl=https://codeproject-ai-bunny.b-cdn.net/server/assets/
+REM set assetStorageUrl=https://www.codeproject.com/ai/download/server/assets/
 
 :: The name of the source directory (in development)
 set srcDirName=src
 
 :: The name of the app directory (in docker)
 set appDirName=app
-
-:: The name of the dir, within the current directory, where install assets will
-:: be downloaded
-set downloadDir=downloads
 
 :: The name of the dir holding the installed runtimes
 set runtimesDir=runtimes
@@ -141,6 +138,14 @@ set runtimesDir=runtimes
 set modulesDir=modules
 set preInstalledModulesDir=preinstalled-modules
 set externalModulesDir=CodeProject.AI-Modules
+
+:: The name of the dir, relative to the root directory, containing the folder
+:: where downloaded assets will be cached
+set downloadDir=downloads
+
+:: Name of the install assets folder. Downloads in <root>/downloads/modules/assets
+:: Module packages will be stored in <root>/downloads/modules/packages
+set assetsDir=assets
 
 :: The name of the dir holding downloaded models for the modules. NOTE: this is 
 :: not currently used, but here for future-proofing
@@ -257,9 +262,13 @@ set preInstalledModulesDirPath=!rootDirPath!\!preInstalledModulesDir!
 set externalModulesDirPath=!rootDirPath!\..\!externalModulesDir!
 set modelsDirPath=!rootDirPath!\!modelsDir!
 set downloadDirPath=!rootDirPath!\!downloadDir!
+set downloadModuleAssetsDirPath=!downloadDirPath!\!modulesDir!\!assetsDir!
 set utilsScriptsDirPath=!appRootDirPath!\scripts
 set installScriptsDirPath=!rootDirPath!\devops\install
 set utilsScript=!utilsScriptsDirPath!\utils.bat
+
+:: Load vars in .env. This may update things like dotNetTarget
+for /f "tokens=1,2 delims==" %%a in (!rootDirPath!\.env) do set %%a=%%b
 
 :: Helper vars for OS, Platform (see note below), and system name. systemName is
 :: a no-op here because nothing exciting happens on Windows. In the corresponding
@@ -283,7 +292,7 @@ set architecture=%PROCESSOR_ARCHITECTURE%
 
 :: A NOTE ON PLATFORM.
 :: We use the full "x86_64" for architecture, but follow the common convention
-:: of abbreviating this to "x64" when used in conjuntion with OS. So windows-x64
+:: of abbreviating this to "x64" when used in conjunction with OS. So windows-x64
 :: rather than windows-x86_64. To simplify further, if the platform value doesn't
 :: have a suffix then it's assumed to be -x64. This may change in the future.
 if /i "!architecture!" == "arm64" (
@@ -316,18 +325,18 @@ set mainSetupStarttime=%time%
 REM Commented: WMIC not always available
 :: REM Report disk space available
 :: for /f "tokens=1,2 delims== " %%a in ('wmic logicaldisk where "DeviceID='%cd:~0,2%'" get FreeSpace^,Size^,VolumeName /format:list') do (
-::     if "%%a"=="FreeSpace"  set freespacebytes=%%b
+::     if "%%a"=="FreeSpace"  set freeSpaceBytes=%%b
 ::     if "%%a"=="Size"       set totalspacebytes=%%b
-::     if "%%a"=="VolumeName" set volumename=%%b
+::     if "%%a"=="VolumeName" set volumeName=%%b
 :: )
 :: REM Anything over 2Gb kills this
-:: REM set /a freeSpaceGb=!freespacebytes! / 1073741824
-:: REM set /a freeSpaceGbfraction=!freespacebytes! %% 1073741824 * 10 / 1073741824
-:: set /a freeSpaceGb=!freespacebytes:~0,-4! / 1048576
-:: set /a freeSpaceGbfraction=!freespacebytes:~0,-4! %% 1048576 * 10 / 1048576
+:: REM set /a freeSpaceGb=!freeSpaceBytes! / 1073741824
+:: REM set /a freeSpaceGbFraction=!freeSpaceBytes! %% 1073741824 * 10 / 1073741824
+:: set /a freeSpaceGb=!freeSpaceBytes:~0,-4! / 1048576
+:: set /a freeSpaceGbFraction=!freeSpaceBytes:~0,-4! %% 1048576 * 10 / 1048576
 :: set /a totalSpaceGb=!totalspacebytes:~0,-4! / 1048576
 
-for /f "tokens=6*" %%A in ('vol') do set volumename=%%A
+for /f "tokens=6*" %%A in ('vol') do set volumeName=%%A
 set driveRoot=%CD:~0,3%
 for /f "usebackq" %%A in (`powershell -NoProfile -Command "(Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Root -eq '!driveRoot!' }).Free + (Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Root -eq '!driveRoot!' }).Used"`) do (
     set totalspacebytes=%%A
@@ -336,16 +345,16 @@ REM chop off last 3 digits (divide by 1000) then divide by 1024^2 to get Gb. Thi
 REM is to avoid numerical overflow but results in bad maths.
 set /a totalSpaceGb=!totalspacebytes:~0,-3! / 1048576
 
-for /f "tokens=3" %%A in ('dir !driveRoot!') do set freespacebytes=%%A
-set freespacebytes=!freespacebytes:,=!
-set /a freeSpaceGb=!freespacebytes:~0,-3! / 1048576
-set /a freeSpaceGbfraction=!freespacebytes:~0,-3! %% 1048576 * 10 / 1048576
+for /f "tokens=3" %%A in ('dir !driveRoot!') do set freeSpaceBytes=%%A
+set freeSpaceBytes=!freeSpaceBytes:,=!
+set /a freeSpaceGb=!freeSpaceBytes:~0,-3! / 1048576
+set /a freeSpaceGbFraction=!freeSpaceBytes:~0,-3! %% 1048576 * 10 / 1048576
 
-if "!volumename!" == "" set volumename=(No label)
+if "!volumeName!" == "" set volumeName=(No label)
 
 
-REM call "!utilsScript!" WriteLine "!freespacebytes! of !totalspacebytes! available on !VolumeName! (!os_name! !architecture! - !platform!)" !color_mute!
-call "!utilsScript!" WriteLine "!freeSpaceGb!.!freeSpaceGbfraction!Gb of !totalSpaceGb!Gb available on !VolumeName! (!os_name! !architecture! - !platform!)" !color_mute!
+REM call "!utilsScript!" WriteLine "!freeSpaceBytes! of !totalspacebytes! available on !VolumeName! (!os_name! !architecture! - !platform!)" !color_mute!
+call "!utilsScript!" WriteLine "!freeSpaceGb!.!freeSpaceGbFraction!Gb of !totalSpaceGb!Gb available on !VolumeName! (!os_name! !architecture! - !platform!)" !color_mute!
 
 
 :: Ensure directories are created and download required assets.
@@ -353,6 +362,8 @@ call "!utilsScript!" WriteLine "!freeSpaceGb!.!freeSpaceGbfraction!Gb of !totalS
 call "!utilsScript!" WriteLine
 call "!utilsScript!" WriteLine "General CodeProject.AI setup" "White" "Blue" !lineWidth!
 call "!utilsScript!" WriteLine
+
+call "!utilsScript!" EnsureVCRedistInstalled
 
 :: Before we start, ensure we can read the JSON config files        
 call :SetupJSONParser
@@ -367,7 +378,7 @@ if "!jsonFileValue!" NEQ "" set assetStorageUrl=!jsonFileValue!
 call "!utilsScript!" Write "Creating Directories..."
 if not exist "!runtimesDirPath!\" mkdir "!runtimesDirPath!"
 if not exist "!downloadDirPath!\" mkdir "!downloadDirPath!"
-if not exist "!downloadDirPath!\!modulesDir!\" mkdir "!downloadDirPath!\!modulesDir!\"
+if not exist "!downloadModuleAssetsDirPath!\" mkdir "!downloadModuleAssetsDirPath!\"
 if not exist "!downloadDirPath!\!modelsDir!\" mkdir "!downloadDirPath!\!modelsDir!\"
 
 call "!utilsScript!" WriteLine "done" "Green"
@@ -376,21 +387,22 @@ call "!utilsScript!" WriteLine ""
 :: Output settings
 if /i "%verbosity%" neq "quiet" (
     call "!utilsScript!" WriteLine 
-    call "!utilsScript!" WriteLine "os, name, arch         = !os! !os_name! !architecture!" !color_mute!
-    call "!utilsScript!" WriteLine "systemName, platform   = !systemName!, !platform!"      !color_mute!
-    call "!utilsScript!" WriteLine "edgeDevice             = !edgeDevice!"                  !color_mute!
-    call "!utilsScript!" WriteLine "setupMode              = !setupMode!"                   !color_mute!
-    call "!utilsScript!" WriteLine "executionEnvironment   = !executionEnvironment!"        !color_mute!
-    call "!utilsScript!" WriteLine "rootDirPath            = !rootDirPath!"                 !color_mute!
-    call "!utilsScript!" WriteLine "appRootDirPath         = !appRootDirPath!"              !color_mute!
-    call "!utilsScript!" WriteLine "setupScriptDirPath     = !setupScriptDirPath!"          !color_mute!
-    call "!utilsScript!" WriteLine "utilsScriptsDirPath    = !utilsScriptsDirPath!"         !color_mute!
-    call "!utilsScript!" WriteLine "runtimesDirPath        = !runtimesDirPath!"             !color_mute!
-    call "!utilsScript!" WriteLine "modulesDirPath         = !modulesDirPath!"              !color_mute!
-    call "!utilsScript!" WriteLine "externalModulesDirPath = !externalModulesDirPath!"      !color_mute!
-    call "!utilsScript!" WriteLine "modelsDirPath          = !modelsDirPath!"               !color_mute!
-    call "!utilsScript!" WriteLine "downloadDirPath        = !downloadDirPath!"             !color_mute!
-    call "!utilsScript!" WriteLine "assetStorageUrl        = !assetStorageUrl!"             !color_mute!
+    call "!utilsScript!" WriteLine "os, name, arch              = !os! !os_name! !architecture!" !color_mute!
+    call "!utilsScript!" WriteLine "systemName, platform        = !systemName!, !platform!"      !color_mute!
+    call "!utilsScript!" WriteLine "edgeDevice                  = !edgeDevice!"                  !color_mute!
+    call "!utilsScript!" WriteLine "setupMode                   = !setupMode!"                   !color_mute!
+    call "!utilsScript!" WriteLine "executionEnvironment        = !executionEnvironment!"        !color_mute!
+    call "!utilsScript!" WriteLine "rootDirPath                 = !rootDirPath!"                 !color_mute!
+    call "!utilsScript!" WriteLine "appRootDirPath              = !appRootDirPath!"              !color_mute!
+    call "!utilsScript!" WriteLine "setupScriptDirPath          = !setupScriptDirPath!"          !color_mute!
+    call "!utilsScript!" WriteLine "utilsScriptsDirPath         = !utilsScriptsDirPath!"         !color_mute!
+    call "!utilsScript!" WriteLine "runtimesDirPath             = !runtimesDirPath!"             !color_mute!
+    call "!utilsScript!" WriteLine "modulesDirPath              = !modulesDirPath!"              !color_mute!
+    call "!utilsScript!" WriteLine "externalModulesDirPath      = !externalModulesDirPath!"      !color_mute!
+    call "!utilsScript!" WriteLine "modelsDirPath               = !modelsDirPath!"               !color_mute!
+    call "!utilsScript!" WriteLine "downloadDirPath             = !downloadDirPath!"             !color_mute!
+    call "!utilsScript!" WriteLine "downloadModuleAssetsDirPath = !downloadModuleAssetsDirPath!" !color_mute!
+    call "!utilsScript!" WriteLine "assetStorageUrl             = !assetStorageUrl!"             !color_mute!
     call "!utilsScript!" WriteLine
 )
 
@@ -405,16 +417,31 @@ REM Test for CUDA drivers
 call "!utilsScript!" Write "CUDA Present..."
 
 set hasCUDA=false
+set hasCUDAToolkit=false
 
 call "!utilsScript!" GetCudaVersion
 if "!cuda_version!" neq "" set hasCUDA=true
 
 if /i "!hasCUDA!" == "true" (
+
+    REM CUDA Toolkit != CUDA drivers. We need the files and CUDA_PATH to be in place
+    if exist "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v*" set hasCUDAToolkit=true
+    if "%CUDA_PATH%" == "" ( set "hasCUDAToolkit=false" ) else ( set "hasCUDAToolkit=true" )
+
     call "!utilsScript!" GetCuDNNVersion
     if "!cuDNN_version!" == "" (
-        call "!utilsScript!" WriteLine "Yes (CUDA !cuda_version!, No cuDNN found)" !color_success!
+        call "!utilsScript!" WriteLine "Yes (CUDA !cuda_version!, No cuDNN found, CUDA Toolkit: !hasCUDAToolkit!)" !color_success!
     ) else (
-        call "!utilsScript!" WriteLine "Yes (CUDA !cuda_version!, cuDNN !cuDNN_version!)" !color_success!
+        call "!utilsScript!" WriteLine "Yes (CUDA !cuda_version!, cuDNN !cuDNN_version!, CUDA Toolkit: !hasCUDAToolkit!)" !color_success!
+
+        REM cuDNN install is a bag of loose parts.
+        REM cuDNN is C:\Program Files\NVIDIA\CUDNN\v9.5\bin\12.6
+        if /i "!PATH:C:\Program Files\NVIDIA\CUDNN\v!cuDNN_version!\bin\!cuda_version!=!" == "!PATH!" (
+            call "!utilsScript!" WriteLine "Updating path to include cuDNN" !color_info!
+            set PATH=!PATH!;C:\Program Files\NVIDIA\CUDNN\v!cuDNN_version!\bin\!cuda_version!\
+            REM setx PATH !PATH!;C:\Program Files\NVIDIA\CUDNN\v!cuDNN_version!\bin\!cuda_version!\
+            REM powershell -command "[Environment]::SetEnvironmentVariable('PATH', '!PATH!', 'Machine');
+        )
     )
 ) else (
     call "!utilsScript!" WriteLine "No" !color_warn!
@@ -572,9 +599,9 @@ if /i "!setupMode!" == "SetupEverything" (
         REM Quick sanity check to ensure .NET is in place. .NET install is done
         REM in the SDK setup, but we do it here too since it's a null-op if it's
         REM in place already, and the SDK setup may not always be called.
-        call "%utilsScript%" SetupDotNet !serverDotNetVersion! aspnetcore
+        call "%utilsScript%" SetupDotNet !dotNetRuntimeVersion! aspnetcore
         if /i "!executionEnvironment!" == "Development" (
-            call "%utilsScript%" SetupDotNet !serverDotNetVersion! SDK
+            call "%utilsScript%" SetupDotNet !dotNetSDKVersion! SDK
         )
             
         REM Install an individual module
@@ -679,6 +706,10 @@ goto:eof
 
 :SetupJSONParser
 
+    if /i "!executionEnvironment!" == "Development" (
+        call "%utilsScript%" SetupDotNet !dotNetSDKVersion! SDK
+    )
+
     pushd !rootDirPath!\utils\ParseJSON
     if not exist ParseJSON.exe (
         call "!utilsScript!" Write "Building ParseJSON..."
@@ -728,10 +759,10 @@ goto:eof
     )
     set virtualEnvDirPath=!pythonDirPath!\venv
 
-    REM The path to the python intepreter for this venv
+    REM The path to the python interpreter for this venv
     set venvPythonCmdPath=!virtualEnvDirPath!\Scripts\python.exe
 
-    REM The location where python packages will be installed for this venvvenv
+    REM The location where python packages will be installed for this venv
     set packagesDirPath=%virtualEnvDirPath%\Lib\site-packages
 
     exit /b
@@ -789,7 +820,7 @@ REM Installs a module in the module's directory, and returns success
 
     if "!moduleName!" == "" set moduleName=!moduleId!
 
-    set announcement=Installing module !moduleName! !moduleVersion!
+    set announcement=Installing module !moduleName! !moduleVersion! (!moduleType!)
     call "!utilsScript!" WriteLine "!announcement!" "White" "Blue" !lineWidth!
     call "!utilsScript!" WriteLine
 
@@ -891,7 +922,7 @@ REM Installs a module in the module's directory, and returns success
         call "!utilsScript!" WriteLine "moduleStartFilePath = !moduleStartFilePath!" "!color_info!"
     )
 
-    call "!utilsScript!" WriteLine "!moduleType! module install" !color_mute!
+    REM call "!utilsScript!" WriteLine "!moduleType! module install" !color_mute!
 
     if exist "!moduleDirPath!\install.bat" (
 
@@ -1059,6 +1090,8 @@ REM Saves the state of the installation environment
     set stateCurrentDir=%cd%
     set stateVerbosity=!verbosity!
     set stateOneStepPIP=!oneStepPIP!
+    set stateHasCUDA=!hasCUDA!
+    set stateInstallGPU=!installGPU!
 
     exit /b
 
@@ -1068,5 +1101,7 @@ REM Restores the state of the installation environment
     cd "!stateCurrentDir!"
     set verbosity=!stateVerbosity!
     set oneStepPIP=!stateOneStepPIP!
+    set hasCUDA=!stateHasCUDA!
+    set installGPU=!stateInstallGPU!
 
     exit /b

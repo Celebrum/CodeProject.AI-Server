@@ -9,8 +9,6 @@
         <RootNamespace>CodeProject.AI.Modules.ObjectDetection.YOLOv5</RootNamespace>
         <AssemblyName>ObjectDetectionYOLOv5Net</AssemblyName>
         <Version>1.4</Version>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>disable</ImplicitUsings>
         <UserSecretsId>dotnet-CodeProject.AI.Yolo-384BE45C-AAED-42BA-9DDB-EF37356B630F</UserSecretsId>
         <ApplicationIcon>favicon.ico</ApplicationIcon>
         <!--<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>-->
@@ -18,7 +16,6 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
         <BaseOutputPath></BaseOutputPath>
-        <TargetFramework>net8.0</TargetFramework>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <!-- Doesn't appear to actually do what's on the label
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -84,17 +81,19 @@
 
     <ItemGroup>
         <PackageReference Include="CodeProject.AI.Module.SDK" Version="1.0.1" />
-        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.16.3" Condition="'$(GpuType)'=='CPU'" />
-        <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.16.3" Condition="'$(GpuType)'=='CUDA'" />
+
+        <PackageReference Include="Microsoft.ML.OnnxRuntime"          Version="1.16.3" Condition="'$(GpuType)'=='CPU'" />
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu"          Version="1.19.2" Condition="'$(GpuType)'=='CUDA'" />
         <PackageReference Include="Microsoft.ML.OnnxRuntime.OpenVino" Version="1.13.1-dev-20221026-1209-861125ccb" Condition="'$(GpuType)'=='OpenVINO'" />
-        <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.18.1" Condition="'$(GpuType)'=='DirectML'" />
-        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.16.3" Condition="'$(GpuType)'=='MPS'" />
+        <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.19.2" Condition="'$(GpuType)'=='DirectML'" />
+        <PackageReference Include="Microsoft.ML.OnnxRuntime"          Version="1.16.3" Condition="'$(GpuType)'=='MPS'" />
 
         <!-- https://github.com/microsoft/onnxruntime/issues/12677#issuecomment-1443802719 -->
-        <PackageReference Include="Microsoft.AI.DirectML" Version="1.15.0" Condition="'$(GpuType)'=='DirectML'" />
+        <PackageReference Include="Microsoft.AI.DirectML" Version="1.15.2" Condition="'$(GpuType)'=='DirectML'" />
 
-        <PackageReference Include="SkiaSharp" Version="2.88.6" />
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+        <PackageReference Include="SkiaSharp" Version="2.88.8" />
+        <PackageReference Condition="'$(IsOsx)'=='true' And '$(IsArm64)'=='true'" Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+        <PackageReference Condition="'$(IsOsx)'!='true' Or '$(IsArm64)'!='true'" Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     </ItemGroup>
 
     <!-- Output the settings based on what we've determined above -->
@@ -161,7 +160,7 @@
 
     <!--
     <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)'== 'Release'">
-      <Exec Command="echo building ObjectDetectionYOLOv5Net-$(GpuType)-$(Version).zip&#xD;&#xA;cd $(ProjectDir)bin\$(Configuration)&#xD;&#xA;tar -c -z -f ObjectDetectionYOLOv5Net-$(GpuType)-$(Version).zip .\net8.0&#xD;&#xA;cd $(ProjectDir)" />
+      <Exec Command="echo building ObjectDetectionYOLOv5Net-$(GpuType)-$(Version).zip&#xD;&#xA;cd $(ProjectDir)bin\$(Configuration)&#xD;&#xA;tar -c -z -f ObjectDetectionYOLOv5Net-$(GpuType)-$(Version).zip .\net9.0&#xD;&#xA;cd $(ProjectDir)" />
     </Target>
     -->
 

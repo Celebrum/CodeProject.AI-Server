@@ -30,14 +30,20 @@ lineWidth=70
 # folder
 createExternalModulePackages=true
 
-dotNetTarget="net8.0"
+# Whether we're creating a package via a github action
+githubAction=false
+
+# The current .NET version 
+dotNetTarget="net9.0"
+
+# Whether we're creating packages for all modules, or just a single module
+singleModule=false
 
 
 # Basic locations
 
-# The name of the dir, within the current directory, where install assets will
-# be downloaded
-downloadDir='downloads'
+# The name of the dir, within the root directory, where packages will be stored
+packageDir='downloads/modules/packages'
 
 # The name of the source directory (in development)
 srcDirName='src'
@@ -51,25 +57,44 @@ modulesDir="modules"
 # The name of the dir holding the external modules
 externalModulesDir="CodeProject.AI-Modules"
 
+# The name of the dir holding the server code itself
+serverDir="CodeProject.AI-Server"
+
+# Location of the utils script in the main CodeProject.AI server repo
+utilsScriptGitHubUrl='https://raw.githubusercontent.com/codeproject/CodeProject.AI-Server/refs/heads/main/src/scripts'
+
 
 # The path to the directory containing this script
-#thisScriptDirPath=$(dirname "$0")
 thisScriptDirPath="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-# We're assuming this script lives in /devops/build
-pushd "${thisScriptDirPath}/../.." >/dev/null
+# We're assuming this script lives in /devops/build, but this script could be
+# called directly from a module's folder if we're just creating a single package
+if [ "$(basename $(cd .. ; pwd))" == "modules" ]; then
+    # In a /modules/<moduleID> folder
+    singleModule=true
+    pushd "${thisScriptDirPath}/../.." >/dev/null
+elif [ "$(basename $(cd .. ; pwd))" == "${externalModulesDir}" ]; then
+    # In /CodeProject.AI-Modules/<moduleID> folder
+    singleModule=true
+    pushd "${thisScriptDirPath}/../../${serverDir}" >/dev/null
+else
+    # Hopefully in the /devops/build folder
+    pushd "${thisScriptDirPath}/../.." >/dev/null
+fi
 rootDirPath="$(pwd)"
 popd >/dev/null
 sdkPath="${rootDirPath}/${srcDirName}/${sdkDir}"
 utilsScriptsDirPath="${rootDirPath}/src/scripts"
+
 
 # Override some values via parameters ::::::::::::::::::::::::::::::::::::::::::
 
 while [[ $# -gt 0 ]]; do
     param=$(echo $1 | tr '[:upper:]' '[:lower:]')
 
-    if [ "$param" = "--no-dotnet" ]; then includeDotNet=false; fi
-    if [ "$param" = "--no-color" ]; then useColor=false; fi
+    if [ "$param" = "--github-action" ]; then githubAction=true; fi
+    if [ "$param" = "--no-dotnet" ];     then includeDotNet=false; fi
+    if [ "$param" = "--no-color" ];      then useColor=false; fi
     if [ "$param" = "--verbosity" ]; then
         shift
         if [[ $# -gt 0 ]]; then
@@ -87,6 +112,23 @@ while [[ $# -gt 0 ]]; do
     fi
     shift
 done
+
+# Load vars in .env. This may update things like dotNetTarget
+if [ -f ${rootDirPath}/.env ]; then
+    # Export each line from the .env file
+    while IFS='=' read -r key value; do
+        # Ignore lines starting with `#` (comments) and empty lines
+        if [[ ! "$key" =~ ^# ]] && [[ -n "$key" ]]; then
+            # Trim any surrounding whitespace
+            key=$(echo $key | xargs)
+            value=$(echo $value | xargs)
+            export "$key=$value"
+        fi
+    done < ${rootDirPath}/.env
+else
+    echo "${rootDirPath}/.env file not found"
+    # exit 1
+fi
 
 # Standard output may be used as a return value in the functions. Expose stream
 # 3 so we can do 'echo "Hello, World!" >&3' within these functions for debugging
@@ -114,10 +156,14 @@ function correctLineEndings () {
     fi
 }
 
-correctLineEndings ${utilsScriptsDirPath}/utils.sh
-
-# "platform" will be set by this script
-source ${utilsScriptsDirPath}/utils.sh
+if [ "${githubAction}" == true ]; then
+    curl -sL ${utilsScriptGitHubUrl}/utils.sh -o utils.sh
+    source utils.sh
+    rm utils.sh
+else
+    correctLineEndings ${utilsScriptsDirPath}/utils.sh
+    source ${utilsScriptsDirPath}/utils.sh
+fi
 
 # Helper method ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -155,9 +201,15 @@ function doModulePackage () {
             # version to the package.bat file.
             packageVersion=$(getValueFromModuleSettings "modulesettings.json" "${packageModuleId}" "Version")
 
-            write "Packaging module ${packageModuleId} ${packageVersion}..." "White"
+            if [ "${githubAction}" != true ]; then
+                write "Packaging module ${packageModuleId} ${packageVersion}..." "White"
+            fi
 
-            correctLineEndings package.sh
+            packageFileName="${packageModuleId}-${packageVersion}.zip"
+
+            if [ "${githubAction}" != true ]; then
+                correctLineEndings package.sh
+            fi
             bash package.sh ${packageModuleId} ${packageVersion}
 
             if [ $? -ne 0 ]; then
@@ -165,14 +217,16 @@ function doModulePackage () {
             fi
         
             popd >/dev/null
-            
+
             # Move package into modules download cache       
-            # echo Moving ${packageModuleDirPath}/${packageModuleId}-${packageVersion}.zip to ${downloadDirPath}/${modulesDir}/
-            mv -f ${packageModuleDirPath}/${packageModuleId}-${packageVersion}.zip ${downloadDirPath}/${modulesDir}/  >/dev/null
+            # echo Moving ${packageModuleDirPath}/${packageFileName} to ${packageDirPath}/
+            mv -f ${packageModuleDirPath}/${packageFileName} ${packageDirPath}/  >/dev/null
 
             if [ $? -ne 0 ]; then
                 writeLine "Error" "Red"
                 success="false"
+            elif [ "${githubAction}" == true ]; then
+                echo $packageFileName
             else
                 writeLine "done" "DarkGreen"
             fi
@@ -185,21 +239,24 @@ function doModulePackage () {
 # The location of directories relative to the root of the solution directory
 modulesDirPath="${rootDirPath}//${modulesDir}"
 externalModulesDirPath="${rootDirPath}/../${externalModulesDir}"
-downloadDirPath="${rootDirPath}/${downloadDir}"
+packageDirPath="${rootDirPath}/${packageDir}"
+
+if [ ! -d "${packageDirPath}" ]; then mkdir -p "${packageDirPath}"; fi
 
 # Let's go
 
-scriptTitle='          Creating CodeProject.AI Module Downloads'
-writeLine 
-writeLine "$scriptTitle" 'DarkCyan' 'Default' $lineWidth
-writeLine 
-writeLine '======================================================================' 'DarkGreen'
-writeLine 
-writeLine '                   CodeProject.AI Packager                            ' 'DarkGreen'
-writeLine 
-writeLine '======================================================================' 'DarkGreen'
-writeLine 
-
+if [ "${githubAction}" != true ]; then
+    scriptTitle='          Creating CodeProject.AI Module Packages'
+    writeLine 
+    writeLine "$scriptTitle" 'DarkCyan' 'Default' $lineWidth
+    writeLine 
+    writeLine '======================================================================' 'DarkGreen'
+    writeLine 
+    writeLine '                   CodeProject.AI Packager                            ' 'DarkGreen'
+    writeLine 
+    writeLine '======================================================================' 'DarkGreen'
+    writeLine 
+fi
 
 if [ "$verbosity" != "quiet" ]; then 
     writeLine 
@@ -214,32 +271,48 @@ fi
 # And off we go...
 success='true'
 
-# Walk through the internal modules directory and call the setup script in each dir
-for d in "${modulesDirPath}/"*/ ; do
-    packageModuleDirPath=$d
-    packageModuleDirName="$(basename $d)"
+if [ "${singleModule}" == true ]; then
+
+    packageModuleDirPath=$(pwd)
+    packageModuleDirName="$(basename $(pwd))"
     packageModuleId=$(getModuleIdFromModuleSettings "${packageModuleDirPath}/modulesettings.json")
 
-    if [ "${packageModuleId}" == "" ]; then continue; fi
-    
-    doModulePackage "$packageModuleId" "$packageModuleDirName" "$packageModuleDirPath"
-done
-
-if [ "$createExternalModulePackages" == "true" ]; then
-    # Walk through the external modules directory and call the setup script in each dir
-    for d in "${externalModulesDirPath}/"*/ ; do
-        packageModuleDirName="$(basename $d)"
-        packageModuleDirPath=$d
-
-        packageModuleId=$(getModuleIdFromModuleSettings "${packageModuleDirPath}/modulesettings.json")
-        if [ "${packageModuleId}" == "" ]; then continue; fi
-
+    if [ "${packageModuleId}" != "" ]; then
         doModulePackage "$packageModuleId" "$packageModuleDirName" "$packageModuleDirPath"
+    fi
+
+else
+
+    # Walk through the internal modules directory and call the setup script in each dir
+    for d in "${modulesDirPath}/"*/ ; do
+        packageModuleDirPath=$d
+        packageModuleDirName="$(basename $d)"
+        packageModuleId=$(getModuleIdFromModuleSettings "${packageModuleDirPath}/modulesettings.json")
+
+        if [ "${packageModuleId}" != "" ]; then    
+            doModulePackage "$packageModuleId" "$packageModuleDirName" "$packageModuleDirPath"
+        fi
     done
+
+    if [ "$createExternalModulePackages" == "true" ]; then
+        # Walk through the external modules directory and call the setup script in each dir
+        for d in "${externalModulesDirPath}/"*/ ; do
+            packageModuleDirName="$(basename $d)"
+            packageModuleDirPath=$d
+            packageModuleId=$(getModuleIdFromModuleSettings "${packageModuleDirPath}/modulesettings.json")
+
+            if [ "${packageModuleId}" != "" ]; then
+                doModulePackage "$packageModuleId" "$packageModuleDirName" "$packageModuleDirPath"
+            fi
+        done
+    fi
+
 fi
 
-writeLine
-writeLine "                Modules packaging Complete" "White" "DarkGreen" $lineWidth
-writeLine
+if [ "${githubAction}" != true ]; then
+    writeLine
+    writeLine "                Modules packaging Complete" "White" "DarkGreen" $lineWidth
+    writeLine
+fi
 
 if [ "${success}" == "false" ]; then exit 1; fi

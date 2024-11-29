@@ -61,7 +61,8 @@ if [ "$os" = "linux" ]; then
 
     # - Needed for opencv-python (TODO: review these and move into module installers that actually use OpenCV)
     packages="ffmpeg libsm6 libxext6"
-    # - So we can query glxinfo for GPU info (mesa) and install modules (the rest)
+    # - So we can query glxinfo for GPU info (mesa) and install modules (the rest).
+    # NOTE: The general setup.sh file should have already installed curl and wget
     packages="${packages} mesa-utils curl rsync unzip wget"
     installAptPackages "${packages}"
 
@@ -74,7 +75,7 @@ else
             write "Installing System.Drawing support "
         fi
 
-        if [ $"$architecture" = 'arm64' ]; then
+        if [ "$architecture" = 'arm64' ]; then
             arch -x86_64 /usr/local/bin/brew list fontconfig >/dev/null 2>/dev/null || \
                 arch -x86_64 /usr/local/bin/brew install fontconfig  >/dev/null 2>/dev/null &
             spin $!
@@ -94,7 +95,7 @@ else
     else
         writeLine "Installing System.Drawing support "
 
-        if [ $"$architecture" = 'arm64' ]; then
+        if [ "$architecture" = 'arm64' ]; then
             arch -x86_64 /usr/local/bin/brew list fontconfig || arch -x86_64 /usr/local/bin/brew install fontconfig
             arch -x86_64 /usr/local/bin/brew list libomp     || arch -x86_64 /usr/local/bin/brew install libomp
         else
@@ -111,10 +112,10 @@ fi
 # Setup .NET for the server, the SDK Utilities, and any .NET modules that may 
 # need it
 if [ "$executionEnvironment" = "Development" ]; then
-    setupDotNet "$serverDotNetVersion" "aspnetcore"
-    setupDotNet "$serverDotNetVersion" "sdk"
+    setupDotNet "$dotNetRuntimeVersion" "aspnetcore"
+    setupDotNet "$dotNetSDKVersion" "sdk"
 else
-    setupDotNet "$serverDotNetVersion" "aspnetcore"
+    setupDotNet "$dotNetRuntimeVersion" "aspnetcore"
 fi
 
 if [ $? -ne 0 ]; then

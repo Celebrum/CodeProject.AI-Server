@@ -9,6 +9,8 @@
 cls
 setlocal enabledelayedexpansion
 
+start ..\utils\stop_all.bat
+
 set useColor=true
 set doDebug=false
 set lineWidth=70
@@ -111,6 +113,17 @@ if /i "!cleanInstallAll!" == "true" (
     set cleanUserData=true
 )
 
+echo clean assets = %cleanAssets%
+echo clean build = %cleanBuild%
+echo clean data = %cleanUserData%
+echo clean download-cache = %cleanDownloadCache%
+echo clean install = %cleanInstallCurrentOS%
+echo clean install-all = %cleanInstallAll%
+echo clean libraries = %cleanLibraries%
+echo clean libraries-all = %cleanLibrariesAll%
+echo clean all = %cleanAll%
+
+
 REM Start cleaning =============================================================
 
 if /i "%cleanAssets%" == "true" (
@@ -209,15 +222,12 @@ if /i "%cleanDownloadCache%" == "true" (
     call "!utilsScript!" WriteLine "Cleaning Downloads" "White" "Blue" !lineWidth!
     call "!utilsScript!" WriteLine 
 
-    rem delete downloads for each module
-    FOR /d %%a IN ("%rootDir%\downloads\*") DO (
+    REM remove non module or model folders
+    FOR /d %%a IN ("%rootDir%\downloads\modules\assets\*") DO (
         IF /i NOT "%%~nxa"=="modules" IF /i NOT "%%~nxa"=="models" call :RemoveDir "%%a"
     )
-    rem delete module packages downloads 
-    FOR %%a IN ("%rootDir%\downloads\modules\*") DO (
-        IF /i NOT "%%~nxa"=="readme.txt" call :RemoveFile "%%a"
-    )
-    rem delete model packages downloads 
+
+    REM clean out models files
     FOR %%a IN ("%rootDir%\downloads\models\*") DO (
         IF /i NOT "%%~nxa"=="models.json" call :RemoveFile "%%a"
     )
@@ -247,7 +257,7 @@ if /i "%cleanInstallCurrentOS%" == "true" (
 if /i "%cleanInstallAll%" == "true" (
 
     call "!utilsScript!" WriteLine 
-    call "!utilsScript!" WriteLine "Cleaning install for other platforms" "White" "Blue" !lineWidth!
+    call "!utilsScript!" WriteLine "Cleaning install for all platforms" "White" "Blue" !lineWidth!
     call "!utilsScript!" WriteLine 
 
     REM Clean shared python installs and venvs
