@@ -83,6 +83,9 @@
 		{
 			"name": "Object Detection Train (YOLOv5)",
 			"path": "../CodeProject.AI-Modules/CodeProject.AI-TrainingObjectDetectionYOLOv5"
+		},
+		{
+			"path": "../.."
 		}
 	],
 	"settings": {
