@@ -1,0 +1,21 @@
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+tensorflow>=2.12.0
+transformers>=4.30.0
+numpy>=1.23.5
+pandas>=1.5.3
+scikit-learn>=1.2.2
+Pillow>=9.5.0
+opencv-python>=4.7.0.72
+onnxruntime-gpu>=1.15.0; platform_system=="Windows"
+onnxruntime>=1.15.0; platform_system!="Windows"
+psutil>=5.9.5
+requests>=2.31.0
+tqdm>=4.65.0
+matplotlib>=3.7.1
+seaborn>=0.12.2
+nltk>=3.8.1
+spacy>=3.5.3
+en-core-web-sm@ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0.tar.gz
+python-dotenv>=1.0.0
