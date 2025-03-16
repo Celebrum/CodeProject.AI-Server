@@ -1,22 +1,21 @@
----
+--- 
 name: Bug report
 about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+title: your_title
+labels: your_label
+assignees: your_username
 
 ---
-
-**Area of Concern**
-- [ ] Server
-- [ ] Behaviour of one or more Modules [provide name(s), e.g. ObjectDetectionYolo]
-- [ ] Installer
-- [ ] Runtime [e.g. Python3.7, .NET]
-- [ ] Module packages [e.g. PyTorch)
-- [ ] Something else
 
 **Describe the bug**
 A clear and concise description of what the bug is.
+
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
@@ -24,12 +23,16 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Your System (please complete the following information):**
- - CodeProject.AI Server version: {e.g. 2.3.1]
- - OS: [e.g. Ubuntu 20.04]
- - System RAM [e.g. 16Gb]
- - GPU (if available) [e.g. GeForce RTX 3060]
- - GPU RAM (if available)  [e.g. 4Gb]
+**Desktop (please complete the following information):**
+ - OS: [e.g. iOS]
+ - Browser [e.g. chrome, safari]
+ - Version [e.g. 22]
+
+**Smartphone (please complete the following information):**
+ - Device: [e.g. iPhone6]
+ - OS: [e.g. iOS8.1]
+ - Browser [e.g. stock browser, safari]
+ - Version [e.g. 22]
 
 **Additional context**
 Add any other context about the problem here.
