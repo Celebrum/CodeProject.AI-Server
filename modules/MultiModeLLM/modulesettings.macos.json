@@ -1,0 +1,9 @@
+{
+  "Modules": {
+    "MultiModeLLM": {
+      "LaunchSettings": {
+        "Runtime": "python3.11"
+      }
+    }
+  }
+}

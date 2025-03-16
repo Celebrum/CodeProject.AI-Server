@@ -1,0 +1,35 @@
+# User-specific files
+*.suo
+*.user
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio cache/options directory
+.vs/
+
+# Misc
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Linux utilities
+wget-log*
+
+# debug debris
+
+
+# Generated package files
+*-[0-9]*.[0-9]*.[0-9]*.zip
+
+# Models
+models/
+cpu-int4-rtn-block-32-acc-level-4/
+cuda-int4-rtn-block-32/

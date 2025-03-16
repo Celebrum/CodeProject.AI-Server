@@ -1,0 +1,11 @@
+#! Python3.10
+
+numpy                         # Installing NumPy, a package for scientific computing
+
+#--index-url=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-genai/pypi/simple/
+-i https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
+onnxruntime-genai-cuda        # Installing onnxruntime-genai for CUDA, the ONNX Runtime generate() API
+
+CodeProject-AI-SDK            # Installing the CodeProject.AI SDK
+
+# last line empty

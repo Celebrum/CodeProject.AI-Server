@@ -1,0 +1,12 @@
+#! Python3.12
+
+# For Phi-3 for Apple Silicon using MLX
+#See https://huggingface.co/JosefAlbers/Phi-3-vision-128k-instruct-mlx
+mlx                             # Installing MLX, a framework for machine learning on Apple silicon.
+phi-3-vision-mlx==0.0.2         # Installing onnxruntime-genai, the ONNX Runtime generate() API
+torch                           # Installing PyTorch, an open source machine learning framework
+torchvision                     # Installing TorchVision, for working with computer vision models
+
+CodeProject-AI-SDK              # Installing the CodeProject.AI SDK
+
+# last line empty

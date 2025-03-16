@@ -1,0 +1,123 @@
+{
+  "Modules": {
+
+    "MultiModeLLM": {
+      "Name": "MultiModeLLM",
+      "Version": "1.1.0",
+
+      "PublishingInfo" : {
+        "Description": "A multi-modal Large Language Model",
+        "IconURL": null,
+        "Category": "Generative AI",
+        "Stack": "Python, Phi-3",
+        "License": "MIT",
+        "LicenseUrl": "https://huggingface.co/microsoft/Phi-3-vision-128k-instruct/resolve/main/LICENSE",
+        "Author": "Chris Maunder",
+        "Homepage": "https://github.com/codeproject/CodeProject.AI-Server/",
+        "BasedOn": "chat-with-phi-3-vision",
+        "BasedOnUrl": "https://huggingface.co/microsoft/Phi-3-vision-128k-instruct/blob/main/sample_inference.py"
+      },
+
+      "LaunchSettings": {
+        "AutoStart": false,
+        "FilePath": "multimode_llm_adapter.py",
+        "Runtime": "python3.10",
+        "RuntimeLocation": "Local",       // Can be Local, Shared or System
+        "PostStartPauseSecs": 0,          // Generally 1 if using GPU, 0 for CPU
+        "Queue": null,                    // Use default
+        "Parallelism": 1                  // 0 = Default = number of CPUs / 2
+      },
+
+      "EnvironmentVariables": {
+        "CPAI_LOG_VERBOSITY": "Quiet",
+
+        "CPAI_MODULE_MULTIMODE_LLM_MODEL_DIR":      "./models",
+
+        // For loading model downloaded at install time
+        "CPAI_MODULE_MULTIMODE_MODEL_FILENAME": "Phi-3-vision-4k-instruct-q4.gguf",
+
+        // For loading via llama-cpp.from_pretrained
+        "CPAI_MODULE_MULTIMODE_MODEL_REPO":  "microsoft/Phi-3-vision-4k-instruct"
+      },
+
+      "GpuOptions" : {
+        "InstallGPU": true,               // GPU support not provided
+        "EnableGPU": true,                // Will be coerced to false if InstallGPU = false
+        "AcceleratorDeviceName": null,    // = default
+        "HalfPrecision": "enable"         // 'Force', 'Enable', 'Disable': whether to force on, allow, or disable half-precision ops
+      },
+      
+      "InstallOptions" : {
+        "Platforms": [ "windows", "Linux", "macOS", "macOS-arm64" ],
+        "ModuleReleases": [               // Which server version is compatible with each version of this module.
+          { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.8.0", "2.9.0" ], "ReleaseDate": "2024-08-04", "ReleaseNotes": "Initial release" },
+          { "ModuleVersion": "1.1.0", "ServerVersionRange": [ "2.9.1", ""      ], "ReleaseDate": "2024-11-19", "ReleaseNotes": "Optional image, corrections for CUDA 12" }
+        ]
+      },
+
+      "ModelRequirements" : [{
+          "Task": "Multi-model LLM",
+          "Architecture": "GGUF",
+          "Format": ""
+      }],
+
+      "RouteMaps": [
+        {
+          "Name": "MultiModeLLM",
+          "Route": "text/multimodal-chat",
+          "Method": "POST",
+          "Command": "prompt",
+          "MeshEnabled": false,
+          "Description": "Uses the LLM to answer simple questions.",
+          "Inputs": [
+            {
+              "Name": "prompt",
+              "Type": "Text",
+              "Description": "The prompt to generate text from"
+            },
+            {
+              "Name": "system_prompt",
+              "Type": "Text",
+              "Description": "The description of the assistant",
+              "Default": "You're a helpful assistant who answers questions the user asks of you concisely and accurately."
+            },
+            {
+              "Name": "max_tokens",
+              "Type": "Integer",
+              "Description": "The maximum number of tokens to generate",
+              "Default": "0 (model default)"
+            },
+            {
+              "Name": "temperature",
+              "Type": "Float",
+              "Description": "The temperature to use for sampling",
+              "Default": 0.4
+            }
+          ],
+          "Outputs": [
+            {
+              "Name": "success",
+              "Type": "Boolean",
+              "Description": "True if successful."
+            },
+            {
+              "Name": "reply",
+              "Type": "Text",
+              "Description": "The reply from the model."
+            },
+            {
+              "Name": "inferenceMs",
+              "Type": "Integer",
+              "Description": "The time (ms) to perform the AI inference."
+            },
+            {
+              "Name": "processMs",
+              "Type": "Integer",
+              "Description": "The time (ms) to process the image (includes inference and image manipulation operations)."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

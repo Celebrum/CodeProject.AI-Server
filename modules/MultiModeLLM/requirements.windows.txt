@@ -1,0 +1,9 @@
+#! Python3.10
+
+# For Phi-3 ONNX / DirectML
+numpy                         # Installing NumPy, a package for scientific computing
+onnxruntime-genai-directml    # Installing onnxruntime-genai, the ONNX Runtime generate() API
+
+CodeProject-AI-SDK            # Installing the CodeProject.AI SDK
+
+# last line empty

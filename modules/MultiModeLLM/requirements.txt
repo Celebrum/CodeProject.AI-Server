@@ -1,0 +1,20 @@
+#! Python3.10
+
+# For Phi-3 ONNX / CPU
+numpy                         # Installing NumPy, a package for scientific computing
+
+--pre
+onnxruntime-genai             # Installing onnxruntime-genai, the ONNX Runtime generate() API
+
+# torch                       # Installing PyTorch, an open source machine learning framework
+# torchvision                 # Installing TorchVision, for working with computer vision models
+# transformers                # Installing transformers for State-of-the-art machine Learning for JAX, PyTorch and TensorFlow
+# accelerate==0.30.1          # Installing accelerate, the library for handling multi-GPUs/TPU/fp16 with minimal code
+# bitsandbytes==0.43.1        # Installing bitsandbytes, a library of k-bit optimizers and matrix multiplication routines
+
+# flash_attn==2.5.8
+# openai==1.30.3
+
+CodeProject-AI-SDK              # Installing the CodeProject.AI SDK
+
+# last line empty
