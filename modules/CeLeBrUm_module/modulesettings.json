@@ -1,0 +1,93 @@
+{
+  "Modules": {
+    "CeLeBrUm_module": {
+      "Name": "CeLeBrUm_module",
+      "Version": "1.0.0",
+
+      "PublishingInfo" : {
+        "Description": "CeLeBrUm module for neural network processing",
+        "IconURL": null,
+        "Category": "Neural Processing",
+        "Stack": "Python",
+        "License": "MIT",
+        "Author": "Jean-Sebastien",
+        "Homepage": "https://github.com/codeproject/CodeProject.AI-Server/"
+      },
+
+      "LaunchSettings": {
+        "AutoStart": true,
+        "FilePath": "cerebrum_adapter.py",
+        "Runtime": "python3.10",
+        "RuntimeLocation": "Local",
+        "PostStartPauseSecs": 0,
+        "Queue": null,
+        "Parallelism": 1
+      },
+
+      "EnvironmentVariables": {
+        "CPAI_LOG_VERBOSITY": "Quiet",
+        "CPAI_MODULE_CEREBRUM_MODEL_DIR": "./models"
+      },
+
+      "GpuOptions" : {
+        "InstallGPU": true,
+        "EnableGPU": true,
+        "AcceleratorDeviceName": null,
+        "HalfPrecision": "enable"
+      },
+      
+      "InstallOptions" : {
+        "Platforms": [ "windows", "Linux", "macOS", "macOS-arm64" ],
+        "ModuleReleases": [
+          { "ModuleVersion": "1.0.0", "ServerVersionRange": [ "2.9.1", "" ], "ReleaseDate": "2024-11-19", "ReleaseNotes": "Initial release" }
+        ]
+      },
+
+      "RouteMaps": [
+        {
+          "Name": "CeLeBrUm_Process",
+          "Route": "neural/cerebrum-process",
+          "Method": "POST",
+          "Command": "process",
+          "MeshEnabled": true,
+          "Description": "Neural processing using CeLeBrUm module",
+          "Inputs": [
+            {
+              "Name": "input_data",
+              "Type": "Text",
+              "Description": "The input data to process"
+            },
+            {
+              "Name": "parameters",
+              "Type": "JSON",
+              "Description": "Processing parameters",
+              "Default": "{}"
+            }
+          ],
+          "Outputs": [
+            {
+              "Name": "success",
+              "Type": "Boolean",
+              "Description": "True if successful."
+            },
+            {
+              "Name": "result",
+              "Type": "Text",
+              "Description": "The processing result."
+            },
+            {
+              "Name": "inferenceMs",
+              "Type": "Integer",
+              "Description": "The time (ms) to perform the AI inference."
+            },
+            {
+              "Name": "processMs",
+              "Type": "Integer",
+              "Description": "The time (ms) to process the request."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
