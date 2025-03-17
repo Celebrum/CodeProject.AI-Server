@@ -11,7 +11,7 @@ common_pkg_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."
 if os.path.isdir(common_pkg_path):
     sys.path.append(common_pkg_path)
 
-from module_logging import LogMethod, setup_logging
+from p import LogMethod, setup_logging
 from module_options import ModuleOptions
 
 # Setup logging
